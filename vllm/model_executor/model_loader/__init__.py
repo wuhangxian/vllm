@@ -15,6 +15,7 @@ from vllm.model_executor.model_loader.dummy_loader import DummyModelLoader
 from vllm.model_executor.model_loader.modelexpress_loader import (
     ModelExpressModelLoader,
 )
+from vllm.model_executor.model_loader.mooncake_loader import MooncakeModelLoader
 from vllm.model_executor.model_loader.runai_streamer_loader import (
     RunaiModelStreamerLoader,
 )
@@ -39,6 +40,7 @@ LoadFormats = Literal[
     "instanttensor",
     "mistral",
     "modelexpress",
+    "mooncake",
     "npcache",
     "pt",
     "runai_streamer",
@@ -56,6 +58,7 @@ _LOAD_FORMAT_TO_MODEL_LOADER: dict[str, type[BaseModelLoader]] = {
     "instanttensor": DefaultModelLoader,
     "mistral": DefaultModelLoader,
     "modelexpress": ModelExpressModelLoader,
+    "mooncake": MooncakeModelLoader,
     "npcache": DefaultModelLoader,
     "pt": DefaultModelLoader,
     "runai_streamer": RunaiModelStreamerLoader,
@@ -152,6 +155,7 @@ __all__ = [
     "BaseModelLoader",
     "BitsAndBytesModelLoader",
     "ModelExpressModelLoader",
+    "MooncakeModelLoader",
     "DefaultModelLoader",
     "DummyModelLoader",
     "RunaiModelStreamerLoader",

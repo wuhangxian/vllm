@@ -1605,13 +1605,31 @@ class EngineArgs:
                 self.seed,
             )
 
+        model = self.model
+        model_weights = self.model_weights
+        tokenizer = self.tokenizer
+        hf_config_path = self.hf_config_path
+        served_model_name = self.served_model_name
+        if self.load_format == "mooncake" and model.startswith("mooncake://"):
+            from vllm.model_executor.model_loader.mooncake_loader import (
+                prepare_mooncake_model,
+            )
+
+            model_weights = model
+            model = prepare_mooncake_model(
+                model_weights, self.model_loader_extra_config
+            )
+            tokenizer = tokenizer or model
+            hf_config_path = hf_config_path or model
+            served_model_name = served_model_name or model_weights
+
         return ModelConfig(
-            model=self.model,
-            model_weights=self.model_weights,
-            hf_config_path=self.hf_config_path,
+            model=model,
+            model_weights=model_weights,
+            hf_config_path=hf_config_path,
             runner=self.runner,
             convert=self.convert,
-            tokenizer=self.tokenizer,  # type: ignore[arg-type]
+            tokenizer=tokenizer,  # type: ignore[arg-type]
             tokenizer_mode=self.tokenizer_mode,
             trust_remote_code=self.trust_remote_code,
             allowed_local_media_path=self.allowed_local_media_path,
@@ -1636,7 +1654,7 @@ class EngineArgs:
             disable_cascade_attn=self.disable_cascade_attn,
             skip_tokenizer_init=self.skip_tokenizer_init,
             enable_prompt_embeds=self.enable_prompt_embeds,
-            served_model_name=self.served_model_name,
+            served_model_name=served_model_name,
             language_model_only=self.language_model_only,
             limit_mm_per_prompt=self.limit_mm_per_prompt,
             enable_mm_embeds=self.enable_mm_embeds,
@@ -1826,10 +1844,12 @@ class EngineArgs:
 
         # Check if the model is a speculator and override model/tokenizer/config
         # BEFORE creating ModelConfig, so the config is created with the target model
-        # Skip speculator detection for cloud storage models (eg: S3, GCS) since
-        # HuggingFace cannot load configs directly from S3 URLs. S3 models can still
-        # use speculators with explicit --speculative-config.
-        if not is_cloud_storage(self.model):
+        # Skip speculator detection for remote model URLs that HuggingFace cannot
+        # inspect directly. They can still use explicit --speculative-config.
+        is_mooncake_model = self.load_format == "mooncake" and self.model.startswith(
+            "mooncake://"
+        )
+        if not is_cloud_storage(self.model) and not is_mooncake_model:
             (self.model, self.tokenizer, self.speculative_config) = (
                 maybe_override_with_speculators(
                     model=self.model,

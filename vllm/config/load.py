@@ -55,6 +55,8 @@ class LoadConfig:
     - "mistral" will load weights from consolidated safetensors files used by
       Mistral models.
     - "modelexpress" will load weights using ModelExpress.
+    - "mooncake" will stream safetensors weights from a Mooncake Store
+      checkpoint.
     - Other custom values can be supported via plugins.
     """
     download_dir: str | None = None
